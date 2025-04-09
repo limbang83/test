@@ -1,0 +1,221 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 공통 필드를 위한 모델
+model User {
+  id            String            @id @default(uuid())
+  email         String            @unique
+  password      String
+  name          String
+  mobile        String            @unique
+  skill_level   SkillLevel
+  work_history  DateTime
+  enabled       Boolean           @default(true)
+  created_at    DateTime          @default(now()) @db.Timestamp(0)
+  created_id    String?
+  updated_at    DateTime?         @updatedAt @db.Timestamp(0)
+  updated_id    String?
+  projects      Project[]
+  jobPostings   JobPosting[]      @relation("UserPostings")
+  applications  JobApplication[]
+  schedules     Schedule[]
+  financials    FinancialRecord[]
+  marketItems   MarketItem[]
+  sentMessages  Message[]         @relation("SentMessages")
+  recvMessages  Message[]         @relation("ReceivedMessages")
+  userRegions   UserRegion[]
+}
+
+model Region {
+  id          String       @id @default(uuid())
+  name        String
+  userRegions UserRegion[]
+}
+
+model UserRegion {
+  id        String  @id @default(uuid())
+  user      User    @relation(fields: [user_id], references: [id])
+  user_id   String
+  region    Region  @relation(fields: [region_id], references: [id])
+  region_id String
+
+  @@unique([user_id, region_id])
+}
+
+model RequiredSkill {
+  id             String      @id @default(uuid())
+  job_posting    JobPosting  @relation(fields: [job_posting_id], references: [id])
+  job_posting_id String
+  skill_level    SkillLevel
+}
+
+model Project {
+  id            String           @id @default(uuid())
+  title         String
+  address       String
+  start_date    DateTime
+  end_date      DateTime
+  owner         User             @relation(fields: [owner_id], references: [id])
+  owner_id      String
+  status        ProjectStatus    @default(PENDING)
+  enabled       Boolean          @default(true)
+  created_at    DateTime         @default(now()) @db.Timestamp(0)
+  created_id    String?
+  updated_at    DateTime?        @updatedAt @db.Timestamp(0)
+  updated_id    String?
+  jobPostings   JobPosting[]
+  financials    FinancialRecord[]
+}
+
+model JobPosting {
+  id               String            @id @default(uuid())
+  project          Project           @relation(fields: [project_id], references: [id])
+  project_id       String
+  positions        Int
+  emergency        Boolean           @default(false)
+  status           JobPostingStatus  @default(OPEN)
+  enabled          Boolean           @default(true)
+  created_at       DateTime          @default(now()) @db.Timestamp(0)
+  created_id       String?
+  updated_at       DateTime?         @updatedAt @db.Timestamp(0)
+  updated_id       String?
+  owner            User?             @relation("UserPostings", fields: [created_id], references: [id])
+  applications     JobApplication[]
+  requiredSkills   RequiredSkill[]
+}
+
+model JobApplication {
+  id              String               @id @default(uuid())
+  job_posting     JobPosting           @relation(fields: [job_posting_id], references: [id])
+  job_posting_id  String
+  applicant       User                 @relation(fields: [applicant_id], references: [id])
+  applicant_id    String
+  status          JobApplicationStatus @default(PENDING)
+  enabled         Boolean              @default(true)
+  created_at      DateTime             @default(now()) @db.Timestamp(0)
+  created_id      String?
+  updated_at      DateTime?            @updatedAt @db.Timestamp(0)
+  updated_id      String?
+}
+
+model Schedule {
+  id           String        @id @default(uuid())
+  user         User          @relation(fields: [user_id], references: [id])
+  user_id      String
+  title        String
+  start_date   DateTime
+  end_date     DateTime
+  type         ScheduleType
+  related_id   String?       // 관련 프로젝트, 구인 등의 ID
+  enabled      Boolean       @default(true)
+  created_at   DateTime      @default(now()) @db.Timestamp(0)
+  created_id   String?
+  updated_at   DateTime?     @updatedAt @db.Timestamp(0)
+  updated_id   String?
+}
+
+model FinancialRecord {
+  id          String          @id @default(uuid())
+  user        User            @relation(fields: [user_id], references: [id])
+  user_id     String
+  project     Project?        @relation(fields: [project_id], references: [id])
+  project_id  String?
+  type        FinancialType
+  amount      Float
+  category    FinancialCategory
+  date        DateTime
+  created_at  DateTime        @default(now()) @db.Timestamp(0)
+  updated_at  DateTime?       @updatedAt @db.Timestamp(0)
+}
+
+model MarketItem {
+  id          String        @id @default(uuid())
+  seller      User          @relation(fields: [seller_id], references: [id])
+  seller_id   String
+  title       String
+  description String        @db.Text
+  price       Float
+  images      String        @db.Text  // JSON 배열로 이미지 URL 저장
+  status      MarketStatus  @default(AVAILABLE)
+  enabled     Boolean       @default(true)
+  created_at  DateTime      @default(now()) @db.Timestamp(0)
+  created_id  String?
+  updated_at  DateTime?     @updatedAt @db.Timestamp(0)
+  updated_id  String?
+}
+
+model Message {
+  id           String    @id @default(uuid())
+  sender       User      @relation("SentMessages", fields: [sender_id], references: [id])
+  sender_id    String
+  receiver     User      @relation("ReceivedMessages", fields: [receiver_id], references: [id])
+  receiver_id  String
+  content      String    @db.Text
+  read         Boolean   @default(false)
+  enabled      Boolean   @default(true)
+  created_at   DateTime  @default(now()) @db.Timestamp(0)
+  created_id   String?
+  updated_at   DateTime? @updatedAt @db.Timestamp(0)
+  updated_id   String?
+}
+
+// Enum 타입들
+enum SkillLevel {
+  APPRENTICE  // 조공
+  JUNIOR      // 준기공
+  MASTER      // 기공
+}
+
+enum ProjectStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum JobPostingStatus {
+  OPEN
+  CLOSED
+  FILLED
+}
+
+enum JobApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ScheduleType {
+  WORK
+  PERSONAL
+  JOB_POSTING
+}
+
+enum FinancialType {
+  INCOME
+  EXPENSE
+}
+
+enum FinancialCategory {
+  MATERIAL
+  LABOR
+  ETC
+}
+
+enum MarketStatus {
+  AVAILABLE
+  SOLD
+  RESERVED
+}
