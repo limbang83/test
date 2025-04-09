@@ -35,16 +35,21 @@ export class UsersService {
 
       // 지역 연결
       if (regions && regions.length > 0) {
-        await Promise.all(
-          regions.map((regionId) =>
-            prisma.userRegion.create({
-              data: {
-                user_id: createdUser.id,
-                region_id: regionId,
-              },
-            })
-          )
-        );
+        try {
+          await Promise.all(
+            regions.map((regionId) =>
+              prisma.userRegion.create({
+                data: {
+                  user_id: createdUser.id,
+                  region_id: regionId,
+                },
+              })
+            )
+          );
+        } catch (error) {
+          console.error('지역 연결 오류:', error);
+          // 지역 연결에 실패해도 사용자 생성은 계속 진행
+        }
       }
 
       return createdUser;

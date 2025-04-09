@@ -2,6 +2,12 @@
 export default defineNuxtConfig({
   devtools: { enabled: true },
 
+  // 서버 설정 추가
+  server: {
+    port: 3000,
+    host: '0.0.0.0'
+  },
+
   modules: [
     '@nuxtjs/tailwindcss',
     '@nuxt/image',

@@ -199,8 +199,8 @@ enum JobApplicationStatus {
 
 enum ScheduleType {
   WORK
+  MEETING
   PERSONAL
-  JOB_POSTING
 }
 
 enum FinancialType {
@@ -209,9 +209,10 @@ enum FinancialType {
 }
 
 enum FinancialCategory {
-  MATERIAL
-  LABOR
-  ETC
+  SALARY
+  MATERIALS
+  TOOLS
+  OTHER
 }
 
 enum MarketStatus {

@@ -27,7 +27,7 @@ export class AuthController {
       } else {
         // 지역 이름 → ID 변환
         try {
-          const regionIds = [];
+          const regionIds: string[] = [];
           for (const regionName of registerDto.regions) {
             const region = await this.prisma.region.findFirst({
               where: { name: regionName }
@@ -41,27 +41,21 @@ export class AuthController {
             registerDto.regions = regionIds;
             console.log('변환된 지역 ID:', regionIds);
           } else {
-            // 지역을 찾지 못한 경우 기본 지역(서울) 사용
-            const defaultRegion = await this.prisma.region.findFirst({
-              where: { name: '서울' }
-            });
-            registerDto.regions = defaultRegion ? [defaultRegion.id] : [];
+            // 지역을 찾지 못한 경우 빈 배열 사용
+            console.log('지역을 찾을 수 없어 빈 배열 사용');
+            registerDto.regions = [];
           }
         } catch (error) {
           console.error('지역 변환 오류:', error);
-          // 오류 발생 시 기본 지역(서울) 사용
-          const defaultRegion = await this.prisma.region.findFirst({
-            where: { name: '서울' }
-          });
-          registerDto.regions = defaultRegion ? [defaultRegion.id] : [];
+          // 오류 발생 시 빈 배열 사용
+          console.log('오류가 발생하여 빈 배열 사용');
+          registerDto.regions = [];
         }
       }
     } else {
-      // 지역이 없는 경우 기본 지역(서울) 사용
-      const defaultRegion = await this.prisma.region.findFirst({
-        where: { name: '서울' }
-      });
-      registerDto.regions = defaultRegion ? [defaultRegion.id] : [];
+      // 지역이 없는 경우 빈 배열 사용
+      console.log('지역 정보가 없어 빈 배열 사용');
+      registerDto.regions = [];
     }
 
     const user = await this.usersService.create(registerDto);
